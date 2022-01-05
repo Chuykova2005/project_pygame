@@ -1,10 +1,6 @@
 import os
 import sys
 import pygame
-<<<<<<< HEAD
-
-##
-=======
 import pygame_gui
 
 
@@ -37,18 +33,15 @@ class AnimatedDragon(pygame.sprite.Sprite):
             self.speed = 0
 
 
->>>>>>> develop/elena
 class App:
     def __init__(self):
         pygame.init()
         self.width, self.height = 600, 600
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width, self.height))
-<<<<<<< HEAD
         pygame.display.set_caption('Mario')
         self.fps = 50
-=======
->>>>>>> develop/elena
+
 
     def terminate(self):
         pygame.quit()
@@ -70,7 +63,6 @@ class App:
             image = image.convert_alpha()
         return image
 
-<<<<<<< HEAD
     def run_game(self):
         run = True
         while run:
@@ -83,7 +75,7 @@ class App:
             self.screen.fill(pygame.Color('blue'))
             pygame.display.flip()
             self.clock.tick(self.fps)
-=======
+
     def start_window(self):
         manager = pygame_gui.UIManager((self.width, self.height))
         btn_run = pygame_gui.elements.UIButton(
@@ -140,16 +132,13 @@ class App:
             if self.anim_flag:
                 self.anim_sprites.update()
             manager.draw_ui(self.screen)
-
-
             pygame.display.flip()
->>>>>>> develop/elena
 
 
 if __name__ == '__main__':
     app = App()
-<<<<<<< HEAD
-    app.run_game()
-=======
     app.start_window()
->>>>>>> develop/elena
+    app.run_game()
+
+
+
