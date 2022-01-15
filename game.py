@@ -116,34 +116,66 @@ class App:
             pygame.display.flip()
             self.clock.tick(self.fps)
 
-    def start_screen(self):
-        intro_text = ["Динозаврик Гугл"]
+    def start_window(self):
+        manager = pygame_gui.UIManager((self.width, self.height))
+        btn_run = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((0, self.height - 50), (self.width, 50)),
+            text='start game',
+            manager=manager,
+        )
+        self.anim_sprites = pygame.sprite.Group()
+        drag = AnimatedDragon(self, self.load_image('animdrag.png'), 8, 2, self.width // 2 - 60, self.height // 2 - 50)
+        self.anim_flag = False
+        screen2 = pygame.Surface(self.screen.get_size())
+        intro_text = ["", "DRAGON RACE", "",
+                      "Правила игры",
+                      "Если в правилах несколько строк,",
+                      "приходится выводить их построчно"]
 
-        fon = pygame.transform.scale(self.load_image('pretty.jpg'), (self.width, self.height))
-        self.screen.blit(fon, (0, 0))
+        fon = pygame.transform.scale(self.load_image('fon.jpg'), (self.width, self.height))
+        screen2.blit(fon, (0, 0))
         font = pygame.font.Font(None, 30)
         text_coord = 50
         for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('purple'))
+            string_rendered = font.render(line, 1, pygame.Color('black'))
             intro_rect = string_rendered.get_rect()
             text_coord += 10
             intro_rect.top = text_coord
-            intro_rect.x = 10
+            intro_rect.x = 90
             text_coord += intro_rect.height
-            self.screen.blit(string_rendered, intro_rect)
+            screen2.blit(string_rendered, intro_rect)
+
 
         while True:
+            time_delta = self.clock.tick(60) / 1000.0
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.terminate()
-                elif event.type == pygame.KEYDOWN or \
-                        event.type == pygame.MOUSEBUTTONDOWN:
-                    return  # начинаем игру
-            pygame.display.flip()
-            self.clock.tick(self.fps)
+                if event.type == pygame.MOUSEMOTION:
+                    if self.width // 2 - 60 < event.pos[0] < self.width \
+                            and self.height // 2 - 50 < event.pos[1] < self.height:
+                        self.anim_flag = True
+                    else:
+                        self.anim_flag = False
 
+                if event.type == pygame.USEREVENT:
+                    if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                        if event.ui_element == btn_run:
+                            print('Вызвать основной цикл игры')
+                            return
+                manager.process_events(event)
+            manager.update(time_delta)
+            self.screen.fill(pygame.Color('#7512fa'))
+
+            self.screen.blit(screen2, (0, 0))
+            self.anim_sprites.draw(self.screen)
+            if self.anim_flag:
+                self.anim_sprites.update()
+            manager.draw_ui(self.screen)
+            pygame.display.flip()
 
 if __name__ == '__main__':
     app = App()
+    #app.start_window()
     app.run_game()
 
