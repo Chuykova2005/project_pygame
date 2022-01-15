@@ -124,15 +124,13 @@ class App:
         self.screen.blit(fon, rect_fon)
 
     def run_game(self):
-        self.generate_level()
-        t = 1000
-        pygame.time.set_timer(self.myeventtype, t)
+        pygame.time.set_timer(self.myeventtype, 1000)
 
         run = True
         dino = Dino(self)
         while run:
-            fon2 = pygame.transform.scale(self.load_image('grass2.png'), (600, 124))
-            self.screen.blit(fon2, (0, self.height - 124))
+            # fon2 = pygame.transform.scale(self.load_image('grass2.png'), (600, 124))
+            # self.screen.blit(fon2, (0, self.height - 124))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.terminate()
@@ -144,21 +142,16 @@ class App:
                         dino.jump()
 
                 if event.type == self.myeventtype:
-                    t = random.randrange(1000, 15000, 1000)
                     type = random.choice(['1', '2', '3'])
-                    Obstacles(self, type, (500, 325))
-                    print(t)
-                    pygame.time.set_timer(self.myeventtype, t)
+                    Obstacles(self, type, (500, 525))
+                    pygame.time.set_timer(self.myeventtype, random.randrange(1000, 15000, 1000))
 
 
-            # update
-
-            # render
-            #self.screen.fill(pygame.Color('blue'))
-            #print(self.all_obstacles)
+            self.generate_level()
             self.herogroup.draw(self.screen)
-            self.herogroup.update(1, 0)
             self.all_obstacles.draw(self.screen)
+            self.herogroup.update(1, 0)
+
             pygame.display.flip()
             self.clock.tick(self.fps)
 
