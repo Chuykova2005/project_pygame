@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 import pygame
 import pygame_gui
@@ -33,14 +34,32 @@ class AnimatedDragon(pygame.sprite.Sprite):
             self.speed = 0
 
 
+class Obstacles(pygame.sprite.Sprite):
+    images_obstracle = {'1': 'cactus1.png',
+                        '2': 'cactus2.png',
+                        '3': 'cactus3.png'
+                        }
+
+    def __init__(self, app, type, pos):
+        super().__init__(app.all_obstacles)
+        self.app = app
+        self.type = Obstacles.images_obstracle[type]
+        self.image = self.app.load_image(self.type)
+        self.rect = self.image.get_rect()
+        self.rect.x = pos[0]
+        self.rect.y = pos[1] - self.rect.h
+
+
 class App:
     def __init__(self):
         pygame.init()
-        self.width, self.height = 600, 600
+        self.width, self.height = 600, 400
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption('Mario')
         self.fps = 50
+        self.all_obstacles = pygame.sprite.Group()
+        self.myeventtype = 30
 
 
     def terminate(self):
@@ -63,16 +82,38 @@ class App:
             image = image.convert_alpha()
         return image
 
+    def generate_level(self):
+        fon = self.load_image('fon_level1.png')
+        rect_fon = fon.get_rect()
+        rect_fon.bottom = self.height
+
+        self.screen.fill(pygame.Color('lightblue'))
+        self.screen.blit(fon, rect_fon)
+
     def run_game(self):
+        self.generate_level()
+        t = 1000
+        pygame.time.set_timer(self.myeventtype, t)
+
         run = True
         while run:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.terminate()
+                if event.type == self.myeventtype:
+                    t = random.randrange(1000, 15000, 1000)
+                    type = random.choice(['1', '2', '3'])
+                    Obstacles(self, type, (500, 325))
+                    print(t)
+                    pygame.time.set_timer(self.myeventtype, t)
+
+
             # update
 
             # render
-            self.screen.fill(pygame.Color('blue'))
+            #self.screen.fill(pygame.Color('blue'))
+            #print(self.all_obstacles)
+            self.all_obstacles.draw(self.screen)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
@@ -137,7 +178,7 @@ class App:
 
 if __name__ == '__main__':
     app = App()
-    app.start_window()
+    # app.start_window()
     app.run_game()
 
 
