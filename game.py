@@ -6,33 +6,16 @@ import pygame
 class Dino(pygame.sprite.Sprite):
     def __init__(self, app):
         super().__init__(app.herogroup)
-        self.image = self.load_image('dino1.png')
+        self.image = app.load_image('dino1.png')
         self.screen = app.screen
         self.rect = self.image.get_rect()
         self.rect.x = 0
-        self.rect.y = 0
-        app.screen.blit(self.image, (self.rect.x, app.height - self.rect.y))
-        self.rect = self.image.get_rect()
+        self.rect.y = 100
+
         self.isjump = False
         self.count = 25
         self.isrun = True
 
-    def load_image(self, name, colorkey=None):
-        fullname = os.path.join('data', name)
-        print(fullname)
-        # если файл не существует, то выходим
-        if not os.path.isfile(fullname):
-            print(f"Файл с изображением '{fullname}' не найден")
-            sys.exit()
-        image = pygame.image.load(fullname)
-        if colorkey is not None:
-            image = image.convert()
-            if colorkey == -1:
-                colorkey = image.get_at((0, 0))
-            image.set_colorkey(colorkey)
-        else:
-            image = image.convert_alpha()
-        return image
 
     def update(self, x, y):
         self.rect.x += x
@@ -97,6 +80,7 @@ class App:
                     if self.isjump:
                         dino.jump()
             self.herogroup.draw(self.screen)
+            self.herogroup.update(1,0)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
@@ -129,5 +113,5 @@ class App:
 
 if __name__ == '__main__':
     app = App()
-    app.start_screen()
+    # app.start_screen()
     app.run_game()
