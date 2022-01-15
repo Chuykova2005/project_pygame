@@ -37,11 +37,11 @@ class AnimatedDragon(pygame.sprite.Sprite):
 class Dino(pygame.sprite.Sprite):
     def __init__(self, app):
         super().__init__(app.herogroup)
-        self.image = app.load_image('dino1.png')
+        self.image = app.load_image('run_1.png')
         self.screen = app.screen
         self.rect = self.image.get_rect()
         self.rect.x = 0
-        self.rect.y = 100
+        self.rect.y = app.height - self.rect.h - 90
 
         self.isjump = False
         self.count = 25
@@ -79,6 +79,13 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1] - self.rect.h
+        print(self.rect)
+
+    def update(self):
+        if self.rect.x < 0:
+            self.kill()
+        else:
+            self.rect.x -= 1
 
 
 class App:
@@ -89,9 +96,8 @@ class App:
         self.screen = pygame.display.set_mode((self.width, self.height))
         self.all_obstacles = pygame.sprite.Group()
         self.myeventtype = 30
-
         pygame.display.set_caption('Dino')
-        self.fps = 60
+        self.fps = 50
         self.herogroup = pygame.sprite.Group()
 
 
@@ -115,19 +121,20 @@ class App:
             image = image.convert_alpha()
         return image
 
-    def generate_level(self):
+    def generate_level(self, move):
         fon = self.load_image('fon_level1.png')
-        rect_fon = fon.get_rect()
-        rect_fon.bottom = self.height
-
+        self.rect_fon = fon.get_rect()
+        self.rect_fon.bottom = self.height
+        self.rect_fon.x = move
         self.screen.fill(pygame.Color('lightblue'))
-        self.screen.blit(fon, rect_fon)
+        self.screen.blit(fon, self.rect_fon)
 
     def run_game(self):
         pygame.time.set_timer(self.myeventtype, 1000)
 
         run = True
-        dino = Dino(self)
+        self.dino = Dino(self)
+        move_fon = 0
         while run:
             # fon2 = pygame.transform.scale(self.load_image('grass2.png'), (600, 124))
             # self.screen.blit(fon2, (0, self.height - 124))
@@ -139,18 +146,21 @@ class App:
                     if key[pygame.K_SPACE]:
                         self.isjump = True
                     if self.isjump:
-                        dino.jump()
+                        self.dino.jump()
 
                 if event.type == self.myeventtype:
                     type = random.choice(['1', '2', '3'])
-                    Obstacles(self, type, (500, 525))
+                    Obstacles(self, type, (self.width, 525))
                     pygame.time.set_timer(self.myeventtype, random.randrange(1000, 15000, 1000))
-
-
-            self.generate_level()
+            if move_fon > -350:
+                move_fon -= 1
+            else:
+                move_fon = 0
+            self.generate_level(move_fon)
             self.herogroup.draw(self.screen)
             self.all_obstacles.draw(self.screen)
-            self.herogroup.update(1, 0)
+            self.all_obstacles.update()
+            self.herogroup.update(0, 0)
 
             pygame.display.flip()
             self.clock.tick(self.fps)
