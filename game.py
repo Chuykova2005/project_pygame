@@ -38,6 +38,7 @@ class Dino(pygame.sprite.Sprite):
     def __init__(self, app):
         super().__init__(app.herogroup)
         self.image = app.load_image('run_1.png')
+        self.mask = pygame.mask.from_surface(self.image)
         self.screen = app.screen
         self.rect = self.image.get_rect()
         self.rect.x = 0
@@ -76,6 +77,7 @@ class Obstacles(pygame.sprite.Sprite):
         self.app = app
         self.type = Obstacles.images_obstracle[type]
         self.image = self.app.load_image(self.type)
+        self.mask = pygame.mask.from_surface(self.image)
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1] - self.rect.h
@@ -156,6 +158,12 @@ class App:
                 move_fon -= 1
             else:
                 move_fon = 0
+
+            t = pygame.sprite.spritecollide(self.dino, self.all_obstacles, False)
+            if t:
+                print('crash')
+                self.over_game()
+                return
             self.generate_level(move_fon)
             self.herogroup.draw(self.screen)
             self.all_obstacles.draw(self.screen)
@@ -222,6 +230,37 @@ class App:
                 self.anim_sprites.update()
             manager.draw_ui(self.screen)
             pygame.display.flip()
+
+    def over_game(self):
+
+        intro_text = ["Динозаврик Гугл"]
+
+        fon = pygame.transform.scale(self.load_image('fon.jpg'), (self.width, self.height))
+        self.screen.blit(fon, (0, 0))
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        for line in intro_text:
+            string_rendered = font.render(line, 1, pygame.Color('purple'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 10
+            text_coord += intro_rect.height
+            self.screen.blit(string_rendered, intro_rect)
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.terminate()
+                elif event.type == pygame.KEYDOWN or \
+                        event.type == pygame.MOUSEBUTTONDOWN:
+                    for obstacle in self.all_obstacles:
+                        obstacle.kill()
+
+                    self.run_game()
+                    return  # начинаем игру
+            pygame.display.flip()
+            self.clock.tick(self.fps)
 
 
 if __name__ == '__main__':
