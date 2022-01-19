@@ -151,7 +151,7 @@ class App:
             Cloud(800, 400, clouds)
         font = pygame.font.Font(None, 30)
         text_coord = 50
-        string_rendered = font.render(text, 1, pygame.Color('white'))
+        string_rendered = font.render(text, 1, pygame.Color('black'))
         intro_rect = string_rendered.get_rect()
         while run:
             for event in pygame.event.get():
