@@ -103,12 +103,13 @@ class Sun(pygame.sprite.Sprite):
         self.count += 1
 
 
-class Dino:
+class Dino(pygame.sprite.Sprite):
     XPOS = 80
     YPOS = 223
     JUMPSPEED = 8.5
 
-    def __init__(self, img=RUN[0]):
+    def __init__(self, app, img=RUN[0]):
+        super().__init__(app.herogroup)
         self.image = img
         self.isrun = True
         self.isjump = False
@@ -177,7 +178,7 @@ class App:
         self.all_obstacles = pygame.sprite.Group()
         self.myeventtype = 30
         pygame.display.set_caption('Dino')
-        self.fps = 50
+        self.fps = 60
         self.fon = TRACE
         self.points = 0
         self.gamespeed = 20
@@ -222,10 +223,10 @@ class App:
         pygame.time.set_timer(self.myeventtype, 1000)
 
         text = self.get_score()
-        dinos = [Dino()]
+        self.dinos = [Dino(self)]
         
         run = True
-        self.dino = Dino(self)
+        #self.dino = Dino(self)
         move_fon = 0
         clouds = pygame.sprite.Group()
         suns = pygame.sprite.Group()
@@ -243,23 +244,24 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.terminate()
-                if event.type == pygame.KEYDOWN:
-                    key = pygame.key.get_pressed()
+                key = pygame.key.get_pressed()
+
+                for i, dino in enumerate(self.dinos):
                     if key[pygame.K_SPACE]:
-                        self.isjump = True
-                    if self.isjump:
-                        self.dino.jump()
+                        dino.isjump = True
+                        dino.isrun = False
 
                 if event.type == self.myeventtype:
                     type = random.choice(['1', '2', '3'])
-                    Obstacles(self, type, (self.width, 525))
+                    print('type', type)
+                    Obstacles(self, type, (self.width, 325))
                     pygame.time.set_timer(self.myeventtype, random.randrange(1000, 15000, 1000))
-            if move_fon > -350:
+            if move_fon > -150:
                 move_fon -= 1
             else:
                 move_fon = 0
 
-            t = pygame.sprite.spritecollide(self.dino, self.all_obstacles, False)
+            t = pygame.sprite.spritecollide(self.dinos[0], self.all_obstacles, False, pygame.sprite.collide_rect_ratio(0.5))
             if t:
                 print('crash')
                 self.over_game()
@@ -267,11 +269,19 @@ class App:
             self.generate_level(move_fon)
             self.herogroup.draw(self.screen)
             self.all_obstacles.draw(self.screen)
+            for dino in self.dinos:
+                dino.update()
+                dino.draw(self.screen)
+
+            clouds.update(self.screen)
+            sun.update(self.screen)
+            self.screen.blit(string_rendered, intro_rect)
             self.all_obstacles.update()
-            self.herogroup.update(0, 0)
+            #self.herogroup.update()
 
             pygame.display.flip()
             self.clock.tick(self.fps)
+
 
     def start_window(self):
         manager = pygame_gui.UIManager((self.width, self.height))
@@ -346,25 +356,10 @@ class App:
             intro_rect.top = text_coord
             intro_rect.x = 10
             text_coord += intro_rect.height
-                    sys.exit()
+
             # update
 
             # render
-            self.screen.fill(pygame.Color('white'))
-            for dino in dinos:
-                dino.update()
-                dino.draw(self.screen)
-
-            key = pygame.key.get_pressed()
-
-            for i, dino in enumerate(dinos):
-                if key[pygame.K_SPACE]:
-                    dino.isjump = True
-                    dino.isrun = False
-            self.screen.blit(self.fon, (0, 300))
-            clouds.update(self.screen)
-            sun.update(self.screen)
-            self.screen.blit(string_rendered, intro_rect)
 
         while True:
             for event in pygame.event.get():
@@ -374,6 +369,7 @@ class App:
                         event.type == pygame.MOUSEBUTTONDOWN:
                     for obstacle in self.all_obstacles:
                         obstacle.kill()
+                    self.dinos[0].kill()
 
                     self.run_game()
                     return  # начинаем игру
@@ -383,5 +379,5 @@ class App:
 
 if __name__ == '__main__':
     app = App()
-    # app.start_window()
+    app.start_window()
     app.run_game()
