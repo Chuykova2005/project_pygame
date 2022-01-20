@@ -338,6 +338,7 @@ class App:
             if t:
                 if self.lives == 0:
                     print('crash', self.lives)
+                    self.lives = 3
                     self.over_game()
                     pygame.mixer.music.stop()
                     return
