@@ -63,6 +63,8 @@ JUMP = [load_image('Jump (1).png'), load_image('Jump (2).png'), load_image('Jump
         load_image('Jump (9).png'), load_image('Jump (10).png'), load_image('Jump (11).png'),
         load_image('Jump (12).png')]
 
+DEAD = [pygame.transform.scale(load_image(f"Dead ({i}).png"), (136, 94)) for i in range(1, 9)]
+
 for i in range(len(JUMP)):
     JUMP[i] = pygame.transform.scale(JUMP[i], (136, 94))
 
@@ -106,7 +108,7 @@ class Ptero(pygame.sprite.Sprite):
         self.steps = 0
         self.jx, self.jy = 0, 0
 
-        def fly(self):
+    def fly(self):
         self.image = PTERO[self.steps // 5]
         # self.rect.x = self.XPOS
         self.rect.y = [10, 10, 20, 60, 60, 60, 50][self.steps // 5] + self.YPOS
@@ -156,12 +158,17 @@ class Dino(pygame.sprite.Sprite):
         self.steps = 0
         self.jump_vel = self.JUMP_VEL
         self.jx, self.jy = 0, 0
+        self.isrun = True
+        self.isjump = False
+        self.isdead = False
 
     def update(self):
         if self.isrun:
             self.run()
         if self.isjump:
             self.jump()
+        if self.isdead:
+            self.dead()
         if self.steps >= 40:
             self.steps = 0
 
@@ -181,6 +188,15 @@ class Dino(pygame.sprite.Sprite):
             self.isjump = False
             self.isrun = True
             self.speed = self.JUMPSPEED
+
+    def dead(self):
+        self.image = DEAD[self.steps // 5]
+        self.rect.x = self.XPOS
+        self.rect.y = self.YPOS
+        self.steps += 1
+        if self.steps >= 40:
+            self.isdead = False
+            self.isrun = True
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.rect.x, self.rect.y))
@@ -329,6 +345,9 @@ class App:
                     if xxx == 0:
                         xxx = 135
                         self.lives -= 1
+                        self.dinos[0].isdead = True
+                        self.dinos[0].isrun = False
+                        self.dinos[0].steps = 0
                     self.s_dead.play()
             if xxx > 0:
                 xxx -= 1
