@@ -6,6 +6,9 @@ import pygame_gui
 
 pygame.init()
 
+SCORE_TO_WIN = 3000 # количество очков необходимых для проъождения уровня 21.01.2022
+SPEED = 1 # скорость игры
+
 
 def load_image(name, folder="data", colorkey=None):
     fullname = os.path.join(folder, name)
@@ -74,14 +77,41 @@ for i in range(len(RUN)):
 TRACE = load_image('Track.png')
 
 
+class Ground(pygame.sprite.Sprite):
+    """земля"""
+    def __init__(self, n, *group):
+        super().__init__(*group)
+        self.image = TRACE
+        self.pos_x, self.pos_y = 0 + self.image.get_width() * n, 400 - self.image.get_height()
+        self.rect = self.image.get_rect().move(self.pos_x, self.pos_y)
+        self.shift = self.rect.x
+
+    def update(self):
+        self.rect.x -= SPEED
+        if self.rect.x <= -self.image.get_width():
+            self.rect.x += self.image.get_width() * 2
+            self.shift = self.rect.x
+
+
+class Star(pygame.sprite.Sprite):
+    """звезды на ночном небе, частички салюта и взрыва птеродактиля"""
+    def __init__(self, *group):
+        super().__init__(*group)
+        size = random.randint(4, 8) # размер звезд случайный
+        self.image = pygame.transform.scale(load_image("star.png"), (size, size))
+        # расположение тоже случайное
+        self.pos_x, self.pos_y = random.randint(20, 750), random.randint(5, 100)
+        self.rect = self.image.get_rect().move(self.pos_x, self.pos_y)
+
+
 class Cloud(pygame.sprite.Sprite):
     def __init__(self, width, height, *group):
         super().__init__(*group)
         self.image = load_image('cloud1.png')
         self.rect = self.image.get_rect()
-        print(self.rect)
-        print(width - self.rect.width, width)
-        print(0, self.rect.height // 4)
+        # print(self.rect)
+        # print(width - self.rect.width, width)
+        # print(0, self.rect.height // 4)
         self.rect.x = random.randrange(350, 700)
         self.rect.y = random.randrange(0, 100)
         self.count = 0
@@ -118,18 +148,18 @@ class Ptero(pygame.sprite.Sprite):
         if self.rect.x + self.image.get_width() < 0:
             self.rect.x = 800
         else:
-            self.rect.x -= 1
+            self.rect.x -= SPEED
         app.screen.blit(self.image, (self.rect.x, self.rect.y))
 
 
 class Sun(pygame.sprite.Sprite):
-    def __init__(self, width, height, *group):
+    def __init__(self, width, height, ris, *group):
         super().__init__(*group)
-        self.image = load_image('sun_shiny.png')
+        self.image = load_image(ris)
         self.rect = self.image.get_rect()
-        print(self.rect)
-        print(width - self.rect.width, width)
-        print(0, self.rect.height // 4)
+        # print(self.rect)
+        # print(width - self.rect.width, width)
+        # print(0, self.rect.height // 4)
         self.rect.x = 680
         self.rect.y = 10
         self.count = 0
@@ -219,13 +249,13 @@ class Obstacles(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1] - self.rect.h
-        print(self.rect)
+        # print(self.rect)
 
     def update(self):
         if self.rect.x < 0:
             self.kill()
         else:
-            self.rect.x -= 1
+            self.rect.x -= SPEED
 
 
 class App:
@@ -238,13 +268,14 @@ class App:
         self.myeventtype = 30
         pygame.display.set_caption('Dino')
         self.fps = 60
-        self.fon = TRACE
+        # self.fon = TRACE
         self.points = 0
         self.gamespeed = 20
         self.herogroup = pygame.sprite.Group()
         self.load_sounds()
         self.best_score = []
         self.lives = 3
+        self.level = 1 # уровень игры
 
     def terminate(self):
         pygame.quit()
@@ -276,7 +307,7 @@ class App:
         self.points += 1
         if self.points % 100 == 0:
             self.gamespeed += 1
-        self.points_text = f'Points: {self.points}  Lives:  {self.lives}'
+        self.points_text = f'Level: {self.level}  Points: {self.points}  Lives:  {self.lives}'
         return self.points_text
 
     def generate_level(self, move):
@@ -284,8 +315,11 @@ class App:
         self.rect_fon = fon.get_rect()
         self.rect_fon.bottom = self.height
         self.rect_fon.x = move
-        self.screen.fill(pygame.Color('lightblue'))
-        # self.screen.blit(fon, self.rect_fon)
+        # цвет фона в зависимости от уровня
+        col = pygame.Color('lightblue')
+        if self.level == 2:
+            col = pygame.Color('darkblue')
+        self.screen.fill(col)
 
     def run_game(self):
         xxx = 0
@@ -300,10 +334,24 @@ class App:
         move_fon = 0
         clouds = pygame.sprite.Group()
         suns = pygame.sprite.Group()
-        sun = Sun(800, 400, suns)
-        for i in range(3):
-            Cloud(800, 400).add(clouds)
-            Cloud(800, 400, clouds)
+        grounds = pygame.sprite.Group()
+        # две полоски земли, чтобы перемещаясь создавать иллюзию бесконечной поверхности
+        Ground(0, grounds)
+        Ground(1, grounds)
+        # в зависимости от уровня выводим солнце или луну
+        ris = 'sun_shiny.png'
+        if self.level == 2:
+            ris = 'luna.png'
+        sun = Sun(800, 400, ris, suns)
+        if self.level == 1:
+            # 2-м уровне не небе облака
+            for i in range(3):
+                Cloud(800, 400).add(clouds)
+                Cloud(800, 400, clouds)
+        if self.level == 2:
+            # 2-м уровне не небе светят звезды
+            for _ in range(50):
+                Star(clouds)
         font = pygame.font.Font(None, 30)
         self.ptero = Ptero(self)
         text_coord = 50
@@ -322,11 +370,12 @@ class App:
 
                 if event.type == self.myeventtype:
                     type = random.choice(['1', '2', '3', '4', '5'])
-                    print('type', type)
+                    # print('type', type)
                     Obstacles(self, type, (self.width, 325))
                     pygame.time.set_timer(self.myeventtype, random.randrange(1000, 15000, 1000))
             text = self.get_score()
-            string_rendered = font.render(text, 1, pygame.Color('black'))
+            # цвет текста в зависимости от темноты фона
+            string_rendered = font.render(text, 1, [pygame.Color('black'), pygame.Color('white')][self.level - 1])
             intro_rect = string_rendered.get_rect()
             if move_fon > -150:
                 move_fon -= 1
@@ -339,31 +388,40 @@ class App:
                 if self.lives == 0:
                     print('crash', self.lives)
                     self.lives = 3
-                    self.over_game()
                     pygame.mixer.music.stop()
+                    self.over_game()
+                    # pygame.mixer.music.stop()
                     return
                 else:
                     if xxx == 0:
+                        self.s_dead.play()
                         xxx = 135
                         self.lives -= 1
                         self.dinos[0].isdead = True
                         self.dinos[0].isrun = False
                         self.dinos[0].steps = 0
-                    self.s_dead.play()
             if xxx > 0:
                 xxx -= 1
+            if self.points >= SCORE_TO_WIN * self.level:
+                # при достижении требуемого количества очков переходим на
+                # следующий уроовень
+                self.win_level()
+                return
             self.generate_level(move_fon)
             self.herogroup.draw(self.screen)
             self.all_obstacles.draw(self.screen)
             for dino in self.dinos:
                 dino.update()
                 dino.draw(self.screen)
+            clouds.draw(self.screen)
             clouds.update(self.screen)
+            grounds.draw(self.screen)
+            grounds.update()
             sun.update(self.screen)
             self.ptero.fly()
             self.screen.blit(string_rendered, intro_rect)
             self.all_obstacles.update()
-            self.screen.blit(load_image('Track.png'), (0, 300))
+            # self.screen.blit(load_image('Track.png'), (0, 300))
             # self.herogroup.update()
 
             pygame.display.flip()
@@ -466,7 +524,52 @@ class App:
                         obstacle.kill()
                     self.dinos[0].kill()
                     self.ptero.kill()
-                    self.run_game()
+                    # self.run_game() # здесь нельзя начинать игру т.к. накапливаются незавершенные процедуры
+                    return  # начинаем игру
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+    def win_level(self):
+        # заставка между уровнями
+        global SPEED # здесь нам падо будет изменить скорость
+        self.screen.blit(load_image('gradient.jpg'), (0, 0))
+        self.best_score.append(self.points)
+        best_res = max(self.best_score)
+        # выводится текст в зависимости от текущего уровня
+        intro_text = [["Поздравляем! Вы прошли первый уровень",
+                      'Количество набранных очков:',
+                      f'{self.points}',
+                      f'Лучший результат: {best_res}',
+                      'Нажмите на экран чтобы продолжить'],
+                      ["Поздравляем! Вы победили!",
+                       'Количество набранных очков:',
+                       f'{self.points}',
+                       f'Лучший результат: {best_res}',
+                       'Нажмите на экран чтобы завершить']]
+        font = pygame.font.Font(None, 30)
+        text_coord = 50
+        for line in intro_text[self.level - 1]:
+            string_rendered = font.render(line, 1, pygame.Color('red'))
+            intro_rect = string_rendered.get_rect()
+            text_coord += 10
+            intro_rect.top = text_coord
+            intro_rect.x = 90
+            text_coord += intro_rect.height
+            self.screen.blit(string_rendered, intro_rect)
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.terminate()
+                elif event.type == pygame.KEYDOWN or \
+                        event.type == pygame.MOUSEBUTTONDOWN:
+                    # подготовка начала нового уровня
+                    for obstacle in self.all_obstacles:
+                        obstacle.kill()
+                    self.dinos[0].kill()
+                    self.ptero.kill()
+                    self.level += 1 # увеличиваем номер уровня
+                    SPEED += 1 # увеличиваем скорость
                     return  # начинаем игру
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -475,4 +578,7 @@ class App:
 if __name__ == '__main__':
     app = App()
     app.start_window()
-    app.run_game()
+    while True: # цикл для того чтобы после выхода возвращаться в игру
+        app.run_game()
+        if app.level > 2:
+            break
